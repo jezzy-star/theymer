@@ -20,6 +20,7 @@ mod objects;
 use self::index::Index;
 use self::objects::Color;
 
+const THEME_MARKER: &str = "THEME";
 const SCHEME_MARKER: &str = "SCHEME";
 const SWATCH_MARKER: &str = "SWATCH";
 const SWATCH_VARIABLE: &str = "swatch";

@@ -41,13 +41,14 @@
     reason = "`define_roles` macro generates lowercase variants"
 )]
 
+use indexmap::IndexMap;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::result::Result as StdResult;
 use std::str::FromStr;
 
 use owo_colors::OwoColorize as _;
 use owo_colors::Stream::Stdout;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 
 use super::SwatchName;
 
@@ -283,6 +284,82 @@ define_roles! {
 
 const VARIANT_SEPARATOR: char = '_';
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct Roles(pub IndexMap<Name, Value>);
+
+impl Roles {
+    pub(crate) fn new() -> Self {
+        Self(IndexMap::new())
+    }
+
+    pub(crate) fn iter(&self) -> impl Iterator<Item = (&Name, &Value)> {
+        self.0.iter()
+    }
+
+    pub(crate) fn get(&self, name: &Name) -> Option<&Value> {
+        self.0.get(name)
+    }
+
+    pub(crate) fn set_roles(&self) -> indexmap::map::Keys<'_, Name, Value> {
+        self.0.keys()
+    }
+
+    pub(crate) fn contains_role(&self, name: &Name) -> bool {
+        self.0.contains_key(name)
+    }
+
+    pub(crate) fn insert(&mut self, name: Name, value: Value) -> Option<Value> {
+        self.0.insert(name, value)
+    }
+
+    pub(crate) fn extend(&mut self, other: IndexMap<Name, Value>) {
+        self.0.extend(other)
+    }
+}
+
+impl<'a> IntoIterator for &'a Roles {
+    type IntoIter = indexmap::map::Iter<'a, Name, Value>;
+    type Item = (&'a Name, &'a Value);
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter()
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub(crate) struct ResolvedRoles(IndexMap<Name, Resolved>);
+
+impl ResolvedRoles {
+    pub(crate) fn new() -> Self {
+        Self(IndexMap::new())
+    }
+
+    pub(crate) fn get(&self, name: &Name) -> Option<&Resolved> {
+        self.0.get(name)
+    }
+
+    pub(crate) fn insert(
+        &mut self,
+        name: Name,
+        role: Resolved,
+    ) -> Option<Resolved> {
+        self.0.insert(name, role)
+    }
+
+    pub(crate) fn iter(&self) -> impl Iterator<Item = (&Name, &Resolved)> {
+        self.0.iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a ResolvedRoles {
+    type IntoIter = indexmap::map::Iter<'a, Name, Resolved>;
+    type Item = (&'a Name, &'a Resolved);
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter()
+    }
+}
+
 type Result<T> = StdResult<T, Error>;
 
 #[non_exhaustive]
@@ -315,7 +392,7 @@ impl Kind {
 }
 
 #[non_exhaustive]
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) enum Value {
     Swatch(SwatchName),
     Role(Name),
@@ -384,6 +461,17 @@ impl FromStr for Name {
             .copied()
             .map(Self)
             .ok_or_else(|| Error::Undefined(s.to_owned()))
+    }
+}
+
+impl<'de> Deserialize<'de> for Name {
+    fn deserialize<D>(deserializer: D) -> StdResult<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+
+        s.parse().map_err(serde::de::Error::custom)
     }
 }
 

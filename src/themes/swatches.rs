@@ -1,3 +1,4 @@
+use indexmap::IndexSet;
 use std::borrow::Borrow;
 use std::hash::{Hash, Hasher};
 use std::result::Result as StdResult;
@@ -103,8 +104,42 @@ impl<'de> Deserialize<'de> for Color {
 pub(crate) type Name = Validated<"swatch", Unicode>;
 pub(crate) type AsciiName = Validated<"swatch", Ascii>;
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct Palette(pub IndexSet<Swatch>);
+
+impl Palette {
+    pub(crate) fn new() -> Self {
+        Self(IndexSet::new())
+    }
+
+    pub(crate) fn get(&self, name: &str) -> Option<&Swatch> {
+        self.0.get(name)
+    }
+
+    pub(crate) fn insert(&mut self, swatch: Swatch) -> bool {
+        self.0.insert(swatch)
+    }
+
+    pub(crate) fn replace(&mut self, swatch: Swatch) -> Option<Swatch> {
+        self.0.replace(swatch)
+    }
+
+    pub(crate) fn iter(&self) -> impl Iterator<Item = &Swatch> {
+        self.0.iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a Palette {
+    type IntoIter = indexmap::set::Iter<'a, Swatch>;
+    type Item = &'a Swatch;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter()
+    }
+}
+
 #[non_exhaustive]
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct Swatch {
     pub name: Name,
     pub color: Color,

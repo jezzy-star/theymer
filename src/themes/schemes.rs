@@ -6,28 +6,21 @@ use indexmap::{IndexMap, IndexSet};
 use serde::{Deserialize, Serialize};
 use walkdir::WalkDir;
 
-use self::names::Validated;
+use super::{
+    Palette, ResolvedRole, ResolvedRoles, RoleError, RoleKind, RoleName,
+    RoleValue, Roles, Swatch, SwatchError, ValidatedName, roles,
+};
 use crate::Result;
 use crate::extensions::PathExt as _;
 use crate::output::{Ascii, Unicode};
 
-pub(crate) mod names;
-pub(crate) mod roles;
-pub(crate) mod swatches;
-
-pub(crate) use self::names::Error as NameError;
-pub(crate) use self::roles::{
-    Error as RoleError, Kind as RoleKind, Name as RoleName,
-    Resolved as ResolvedRole, Value as RoleValue,
-};
-pub(crate) use self::swatches::{
-    Error as SwatchError, Name as SwatchName, Swatch,
-};
 
 const MAX_META_FIELD_LENGTH: usize = 1000;
 
-pub(crate) type Name = Validated<"scheme", Unicode>;
-pub(crate) type AsciiName = Validated<"scheme", Ascii>;
+
+pub(crate) type Name = ValidatedName<"scheme", Unicode>;
+pub(crate) type AsciiName = ValidatedName<"scheme", Ascii>;
+
 
 // TODO: move most of these to `super::load`?
 #[non_exhaustive]
@@ -69,30 +62,30 @@ pub(crate) struct Scheme {
     pub name_ascii: AsciiName,
 
     pub meta: Meta,
-    pub palette: IndexSet<Swatch>,
+    pub palette: Palette,
 
     #[serde(skip)]
-    pub roles: IndexMap<RoleName, RoleValue>,
+    pub roles: Roles,
 
     #[serde(flatten)]
-    pub resolved_roles: IndexMap<RoleName, ResolvedRole>,
+    pub resolved_roles: ResolvedRoles,
 
     pub extra: Option<Extra>,
     pub resolved_extra: Option<ResolvedExtra>,
 }
 
-#[derive(Debug, Serialize)]
-struct Raw {
-    scheme: Option<Name>,
-    scheme_ascii: Option<AsciiName>,
-    meta: Meta,
-    palette: IndexSet<Swatch>,
-    roles: IndexMap<RoleName, RoleValue>,
-    extra: Option<Extra>,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct Raw {
+    pub scheme: Option<Name>,
+    pub scheme_ascii: Option<AsciiName>,
+    pub meta: Meta,
+    pub palette: Palette,
+    pub roles: Roles,
+    pub extra: Option<Extra>,
 }
 
 impl Raw {
-    fn into_scheme(self, fallback_name: &str) -> Result<Scheme> {
+    pub(crate) fn into_scheme(self, fallback_name: &str) -> Result<Scheme> {
         let resolved_roles = self.resolve_roles()?;
         let resolved_extra = self
             .extra
@@ -115,20 +108,20 @@ impl Raw {
         })
     }
 
-    fn resolve_roles(&self) -> Result<IndexMap<RoleName, ResolvedRole>> {
-        let mut resolved_roles = IndexMap::new();
-        let mut missing_roles: Vec<String> = Vec::new();
+    fn resolve_roles(&self) -> Result<ResolvedRoles> {
+        let mut resolved_roles = ResolvedRoles::new();
+        let mut missing: Vec<String> = Vec::new();
 
         for base_role in roles::base() {
-            if !self.roles.contains_key(&base_role) {
-                missing_roles.push(base_role.to_string());
+            if !self.roles.contains_role(&base_role) {
+                missing.push(base_role.to_string());
             }
         }
 
-        if !missing_roles.is_empty() {
+        if !missing.is_empty() {
             return Err(RoleError::MissingRequired(format!(
                 "missing required roles: {}",
-                missing_roles.join(", ")
+                missing.join(", ")
             ))
             .into());
         }
@@ -187,8 +180,8 @@ impl Raw {
 
     fn resolve_extra(
         extra: &Extra,
-        palette: &IndexSet<Swatch>,
-        resolved_roles: &IndexMap<RoleName, ResolvedRole>,
+        palette: &Palette,
+        resolved_roles: &ResolvedRoles,
     ) -> Result<ResolvedExtra> {
         let rainbow = extra
             .rainbow
@@ -224,15 +217,15 @@ impl Raw {
 
     fn resolve_value(
         value: &RoleValue,
-        palette: &IndexSet<Swatch>,
-        resolved_roles: &IndexMap<RoleName, ResolvedRole>,
+        palette: &Palette,
+        resolved_roles: &ResolvedRoles,
         role: &str,
     ) -> Result<ResolvedRole> {
         match value {
             RoleValue::Swatch(name) => {
                 let swatch = palette.get(name.as_str()).ok_or_else(|| {
                     Error::UndefinedSwatch {
-                        role: role.to_string(),
+                        role: role.to_owned(),
                         swatch: name.to_string(),
                     }
                 })?;
@@ -263,11 +256,8 @@ impl Raw {
         Ok((name, name_ascii))
     }
 
-    fn parse_roles(
-        roles_val: &toml::Value,
-        path: &String,
-    ) -> Result<IndexMap<RoleName, RoleValue>> {
-        let mut result = IndexMap::new();
+    fn parse_roles(roles_val: &toml::Value, path: &String) -> Result<Roles> {
+        let mut roles = Roles::new();
 
         let table =
             roles_val
@@ -281,34 +271,34 @@ impl Raw {
             if let Some(nested_table) = val.as_table() {
                 for (nested_key, nested_val) in nested_table {
                     let full_key = format!("{key}.{nested_key}");
-                    Self::parse_role(&full_key, nested_val, path, &mut result)?;
+                    Self::parse_role(&full_key, nested_val, path, &mut roles)?;
                 }
             } else {
-                Self::parse_role(key, val, path, &mut result)?;
+                Self::parse_role(key, val, path, &mut roles)?;
             }
         }
 
-        Ok(result)
+        Ok(roles)
     }
 
     fn parse_role(
         role_key: &str,
         val: &toml::Value,
         path: &str,
-        parsed: &mut IndexMap<RoleName, RoleValue>,
+        parsed: &mut Roles,
     ) -> Result<()> {
         let role_name =
             role_key.parse().map_err(|_src| Error::InvalidStructure {
                 path: path.to_owned(),
                 reason: format!("invalid role name: `{role_key}`"),
             })?;
-
         let val_str = val.as_str().ok_or_else(|| Error::InvalidStructure {
             path: path.to_owned(),
             reason: format!("role `{role_key}` must be a string"),
         })?;
 
         parsed.insert(role_name, RoleValue::parse(val_str)?);
+
         Ok(())
     }
 
@@ -349,10 +339,7 @@ impl Raw {
         Ok(Extra { rainbow })
     }
 
-    fn parse_palette(
-        val: &toml::Value,
-        path: &str,
-    ) -> Result<IndexSet<Swatch>> {
+    fn parse_palette(val: &toml::Value, path: &str) -> Result<Palette> {
         let table = val.as_table().ok_or_else(|| Error::Deserializing {
             section: "palette".to_owned(),
             path: path.to_owned(),
@@ -361,7 +348,7 @@ impl Raw {
             )),
         })?;
 
-        let mut palette = IndexSet::new();
+        let mut palette = Palette::new();
 
         for (display_key, v) in table {
             let swatch = Swatch::parse(display_key, v)?;
@@ -374,7 +361,7 @@ impl Raw {
         Ok(palette)
     }
 
-    fn check_ascii_collisions(palette: &IndexSet<Swatch>) -> Result<()> {
+    fn check_ascii_collisions(palette: &Palette) -> Result<()> {
         let mut ascii_to_display: IndexMap<String, Vec<String>> =
             IndexMap::new();
 
@@ -398,7 +385,7 @@ impl Raw {
         Ok(())
     }
 
-    fn check_case_collisions(palette: &IndexSet<Swatch>) -> Result<()> {
+    fn check_case_collisions(palette: &Palette) -> Result<()> {
         let mut lowercase_to_original: IndexMap<String, Vec<String>> =
             IndexMap::new();
 
@@ -445,7 +432,40 @@ pub(crate) struct ResolvedExtra {
     pub rainbow: Vec<ResolvedRole>,
 }
 
+pub(crate) fn load_all(dir: &str) -> Result<IndexMap<String, Scheme>> {
+    let mut schemes = IndexMap::new();
+
+    for entry in WalkDir::new(dir).into_iter().filter_map(StdResult::ok) {
+        let path = entry.path();
+
+        if path.is_toml() {
+            let name = path
+                .file_stem()
+                .and_then(|stem| stem.to_str())
+                .ok_or_else(|| crate::Error::InternalBug {
+                    module: "schemes",
+                    reason: format!(
+                        "attempted to load scheme with corrupted path `{}`",
+                        path.display(),
+                    ),
+                })?;
+
+            let scheme = load(name, path)?;
+
+            schemes.insert(name.to_owned(), scheme);
+        }
+    }
+
+    Ok(schemes)
+}
+
 pub(crate) fn load(name: &str, path: &Path) -> Result<Scheme> {
+    let raw = load_raw(path)?;
+
+    raw.into_scheme(name)
+}
+
+pub(crate) fn load_raw(path: &Path) -> Result<Raw> {
     let path_str = path.display().to_string();
 
     let content =
@@ -512,6 +532,7 @@ pub(crate) fn load(name: &str, path: &Path) -> Result<Scheme> {
         .transpose()?
         .unwrap_or_default();
 
+    // TODO: refactor into `validate_meta`
     validate_meta_field("author", meta.author.as_ref())?;
     validate_meta_field("author_ascii", meta.author_ascii.as_ref())?;
     validate_meta_field("license", meta.license.as_ref())?;
@@ -554,31 +575,7 @@ pub(crate) fn load(name: &str, path: &Path) -> Result<Scheme> {
         extra,
     };
 
-    raw.into_scheme(name)
-}
-
-pub(crate) fn load_all(dir: &str) -> Result<IndexMap<String, Scheme>> {
-    let mut schemes = IndexMap::new();
-
-    for entry in WalkDir::new(dir).into_iter().filter_map(StdResult::ok) {
-        let path = entry.path();
-        if path.is_toml() {
-            let name = path
-                .file_stem()
-                .and_then(|stem| stem.to_str())
-                .ok_or_else(|| crate::Error::InternalBug {
-                    module: "schemes",
-                    reason: format!(
-                        "attempted to load scheme with corrupted path `{}`",
-                        path.display(),
-                    ),
-                })?;
-            let scheme = load(name, path)?;
-            schemes.insert(name.to_owned(), scheme);
-        }
-    }
-
-    Ok(schemes)
+    Ok(raw)
 }
 
 fn validate_meta_field(name: &str, value: Option<&String>) -> Result<()> {

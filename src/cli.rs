@@ -7,7 +7,8 @@ use log::{LevelFilter as LogLevelFilter, info};
 
 use crate::output::WriteMode;
 use crate::templates::Loader;
-use crate::{Result, config, render, schemes};
+use crate::themes::schemes;
+use crate::{Result, config, render};
 
 // TODO: better documentation
 // TODO: add `prune` flag

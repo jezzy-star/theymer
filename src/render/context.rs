@@ -4,10 +4,11 @@ use std::sync::Arc;
 use indexmap::IndexMap;
 
 use super::Color;
-use crate::output::upstream::Special;
-use crate::output::{Style, TextStyle};
-use crate::schemes::{Meta, ResolvedExtra, ResolvedRole, RoleName, Swatch};
-use crate::{Result, Scheme};
+use crate::Result;
+use crate::output::{Special, Style, TextStyle};
+use crate::themes::{
+    Meta, ResolvedExtra, ResolvedRole, RoleName, Scheme, Swatch,
+};
 
 pub(crate) fn build(
     scheme: &Scheme,
@@ -290,7 +291,7 @@ fn insert_set_test_roles(
     scheme: &Scheme,
 ) {
     let mut set_roles: Vec<String> =
-        scheme.roles.keys().map(ToString::to_string).collect();
+        scheme.roles.set_roles().map(ToString::to_string).collect();
 
     if let Some(r) = &scheme.resolved_extra
         && !r.rainbow.is_empty()

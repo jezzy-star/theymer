@@ -7,6 +7,8 @@ use indexmap::IndexMap;
 use log::debug;
 use serde::Deserialize;
 
+use crate::extensions::Merge as _;
+
 const FILENAME: &str = "theymer.toml";
 
 type Result<T> = StdResult<T, Error>;
@@ -40,8 +42,21 @@ pub(crate) enum Error {
 #[non_exhaustive]
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-#[serde(default)]
 pub struct Config {
+    pub strip_directives: Vec<Vec<String>>,
+    pub dirs: Dirs,
+
+    #[serde(rename(serialize = "provider"))]
+    pub providers: Vec<Provider>,
+
+    pub project_type: ProjectType,
+    pub project_root: PathBuf,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+#[serde(default)]
+struct Raw {
     pub strip_directives: Vec<Vec<String>>,
     pub dirs: Dirs,
 
@@ -49,13 +64,12 @@ pub struct Config {
     pub providers: Vec<Provider>,
 }
 
-impl Default for Config {
+impl Default for Raw {
     fn default() -> Self {
         Self {
             // TODO: figure out a design where defaults can be extended by the
             // user instead of completely overridden
             strip_directives: vec![vec!["#:tombi".to_owned()]],
-
             dirs: Dirs::default(),
             providers: default_providers(),
         }
@@ -67,6 +81,7 @@ impl Default for Config {
 #[serde(deny_unknown_fields)]
 #[serde(default)]
 pub struct Dirs {
+    pub themes: String,
     pub schemes: String,
     pub templates: String,
     pub render: String,
@@ -75,6 +90,7 @@ pub struct Dirs {
 impl Default for Dirs {
     fn default() -> Self {
         Self {
+            themes: "themes".to_owned(),
             schemes: "schemes".to_owned(),
             templates: "templates".to_owned(),
             render: "render".to_owned(),
@@ -90,56 +106,6 @@ pub struct Provider {
     pub blob_path: Option<String>,
     pub raw_path: Option<String>,
     pub branch: Option<String>,
-}
-
-impl Provider {
-    #[must_use]
-    pub fn merge_with(&self, default: &Self) -> Self {
-        Self {
-            host: self.host.clone(),
-            blob_path: self
-                .blob_path
-                .clone()
-                .or_else(|| default.blob_path.clone()),
-            raw_path: self
-                .raw_path
-                .clone()
-                .or_else(|| default.raw_path.clone()),
-            branch: self.branch.clone().or_else(|| default.branch.clone()),
-        }
-    }
-}
-
-pub(crate) fn load() -> Result<Config> {
-    let cwd = env::current_dir().map_err(|src| Error::Reading { src })?;
-
-    let project_root = find_project_root(&cwd)?;
-
-    debug!("using project root `{}`", project_root.display());
-
-    let config_path = project_root.join(FILENAME);
-    let content = fs::read_to_string(&config_path)
-        .map_err(|src| Error::Reading { src })?;
-
-    env::set_current_dir(&project_root).map_err(|src| Error::ChangingDir {
-        cwd: cwd.display().to_string(),
-        root: project_root.display().to_string(),
-        src,
-    })?;
-
-    let mut config = parse(content.as_str())?;
-
-    let project_root: &Path = &project_root;
-
-    config.dirs.schemes =
-        expand_and_resolve(&config.dirs.schemes, project_root)?;
-    config.dirs.templates =
-        expand_and_resolve(&config.dirs.templates, project_root)?;
-    config.dirs.render = expand_and_resolve(&config.dirs.render, project_root)?;
-
-    config.providers = merge_providers_with_defaults(&config.providers);
-
-    Ok(config)
 }
 
 fn default_providers() -> Vec<Provider> {
@@ -194,7 +160,7 @@ fn merge_providers_with_defaults(user_providers: &[Provider]) -> Vec<Provider> {
 
     for user_provider in user_providers {
         if let Some(default) = providers.get(&user_provider.host) {
-            let merged = user_provider.merge_with(default);
+            let merged = user_provider.clone().merge(default.clone());
 
             providers.insert(merged.host.clone(), merged);
         } else {
@@ -203,6 +169,59 @@ fn merge_providers_with_defaults(user_providers: &[Provider]) -> Vec<Provider> {
     }
 
     providers.into_values().collect()
+}
+
+#[expect(
+    clippy::exhaustive_enums,
+    reason = "unlikely to add more project types"
+)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+pub enum ProjectType {
+    Monotheme,
+    Polytheme,
+}
+
+fn detect_project_type(project_root: &Path, themes_dir: &str) -> ProjectType {
+    if project_root.join(themes_dir).exists() {
+        return ProjectType::Polytheme;
+    }
+
+    ProjectType::Monotheme
+}
+
+pub(crate) fn load() -> Result<Config> {
+    let cwd = env::current_dir().map_err(|src| Error::Reading { src })?;
+
+    let project_root = find_project_root(&cwd)?;
+
+    debug!("using project root `{}`", project_root.display());
+
+    let config_path = project_root.join(FILENAME);
+    let content = fs::read_to_string(&config_path)
+        .map_err(|src| Error::Reading { src })?;
+
+    // FIXME: remove once all code is updated to use absolute paths based on
+    // `config.project_root`
+    env::set_current_dir(&project_root).map_err(|src| Error::ChangingDir {
+        cwd: cwd.display().to_string(),
+        root: project_root.display().to_string(),
+        src,
+    })?;
+
+    let raw: Raw = parse(content.as_str())?;
+
+    Ok(Config {
+        strip_directives: raw.strip_directives,
+        dirs: Dirs {
+            themes: expand_and_resolve(&raw.dirs.themes, &project_root)?,
+            schemes: expand_and_resolve(&raw.dirs.schemes, &project_root)?,
+            templates: expand_and_resolve(&raw.dirs.templates, &project_root)?,
+            render: expand_and_resolve(&raw.dirs.render, &project_root)?,
+        },
+        providers: merge_providers_with_defaults(&raw.providers),
+        project_type: detect_project_type(&project_root, &raw.dirs.themes),
+        project_root,
+    })
 }
 
 fn find_project_root(cwd: &Path) -> Result<PathBuf> {
@@ -214,9 +233,9 @@ fn find_project_root(cwd: &Path) -> Result<PathBuf> {
         })
 }
 
-fn parse(content: &str) -> Result<Config> {
+fn parse(content: &str) -> Result<Raw> {
     if content.trim().is_empty() {
-        return Ok(Config::default());
+        return Ok(Raw::default());
     }
 
     toml::from_str(content).map_err(|src| Error::Parsing { src: Box::new(src) })
