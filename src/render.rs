@@ -1,3 +1,4 @@
+use crate::ThemeName;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -11,7 +12,7 @@ use crate::templates::{
     Directives, JINJA_TEMPLATE_SUFFIX, Loader, ResolvedProvider,
     SET_TEST_OBJECT, SKIP_RENDERING_PREFIX, providers,
 };
-use crate::{Config, Error, Result, Scheme};
+use crate::{Config, Error, Result, Scheme, Theme};
 
 mod context;
 mod index;
@@ -65,6 +66,7 @@ fn uses_swatch_iteration(template_name: &str) -> bool {
 
 fn resolve_path(
     template_name: &str,
+    theme_name: &str,
     scheme_name: &str,
     config: &Config,
     swatch_name: Option<&str>,
@@ -87,19 +89,25 @@ fn resolve_path(
         .parent()
         .unwrap_or_else(|| Path::new(""));
 
-    let output = swatch_name.map_or_else(
-        || filename.replace(SCHEME_MARKER, scheme_name),
+    let render = swatch_name.map_or_else(
+        || {
+            filename
+                .replace(THEME_MARKER, theme_name)
+                .replace(SCHEME_MARKER, scheme_name)
+        },
         |swatch| {
             filename
+                .replace(THEME_MARKER, theme_name)
                 .replace(SCHEME_MARKER, scheme_name)
                 .replace(SWATCH_MARKER, swatch)
         },
     );
 
     Ok(Path::new(&config.dirs.render)
+        .join(theme_name)
         .join(scheme_name)
         .join(parent_dirs)
-        .join(output))
+        .join(render))
 }
 
 fn strip_prefix(path: &Path, prefix: &Path, context: &str) -> Option<PathBuf> {
@@ -195,6 +203,7 @@ fn should_render(name: &str) -> bool {
 
 fn prepare(
     path: &Path,
+    theme: &Theme,
     scheme: &Scheme,
     template_name: &str,
     template: &minijinja::Template<'_, '_>,
@@ -202,8 +211,13 @@ fn prepare(
     special: &Special,
     current_swatch: Option<&str>,
 ) -> anyhow::Result<String> {
-    let context =
-        context::build(scheme, special, &directives.style, current_swatch)?;
+    let context = context::build(
+        theme,
+        scheme,
+        special,
+        &directives.style,
+        current_swatch,
+    )?;
 
     if !context.contains_key(SET_TEST_OBJECT) {
         return Err(Error::InternalBug {
@@ -233,6 +247,7 @@ fn execute(
     decision: Decision,
     path: &Path,
     output: &str,
+    theme: &Theme,
     scheme: &Scheme,
     template: &minijinja::Template<'_, '_>,
     session: &mut Session,
@@ -271,8 +286,9 @@ fn execute(
                         format!("reading file `{}` for hashing", path.display())
                     })?;
 
-                let entry =
-                    Index::create_entry(path, template, scheme, &formatted)?;
+                let entry = Index::create_entry(
+                    path, theme, scheme, template, &formatted,
+                )?;
 
                 session.index.insert(entry);
 
@@ -288,6 +304,7 @@ fn execute(
 }
 
 fn write(
+    theme: &Theme,
     scheme: &Scheme,
     template_name: &str,
     template: &minijinja::Template<'_, '_>,
@@ -296,13 +313,19 @@ fn write(
     session: &mut Session,
     current_swatch: Option<&str>,
 ) -> anyhow::Result<()> {
+    let theme_name = theme.name.as_str();
     let scheme_name = scheme.name.as_str();
-    let path =
-        resolve_path(template_name, scheme_name, config, current_swatch)?;
+    let path = resolve_path(
+        template_name,
+        theme_name,
+        scheme_name,
+        config,
+        current_swatch,
+    )?;
     let special = build_upstream(scheme_name, &path, session, config);
-
     let output = prepare(
         &path,
+        theme,
         scheme,
         template_name,
         template,
@@ -310,16 +333,16 @@ fn write(
         &special,
         current_swatch,
     )?;
-
-    let status = session.index.check(&path, scheme, template)?;
+    let status = session.index.check(&path, theme, scheme, template)?;
     let decision = strategy::decide(status, session.write_mode);
 
-    execute(decision, &path, &output, scheme, template, session)?;
+    execute(decision, &path, &output, theme, scheme, template, session)?;
 
     Ok(())
 }
 
 pub(crate) fn apply(
+    theme: &Theme,
     scheme: &Scheme,
     template_name: &str,
     template: &minijinja::Template<'_, '_>,
@@ -327,11 +350,20 @@ pub(crate) fn apply(
     config: &Config,
     session: &mut Session,
 ) -> Result<()> {
-    apply_internal(scheme, template_name, template, directives, config, session)
-        .map_err(Error::rendering)
+    apply_internal(
+        theme,
+        scheme,
+        template_name,
+        template,
+        directives,
+        config,
+        session,
+    )
+    .map_err(Error::rendering)
 }
 
 fn apply_internal(
+    theme: &Theme,
     scheme: &Scheme,
     template_name: &str,
     template: &minijinja::Template<'_, '_>,
@@ -349,6 +381,7 @@ fn apply_internal(
 
         for swatch in &scheme.palette {
             write(
+                theme,
                 scheme,
                 template_name,
                 template,
@@ -360,6 +393,7 @@ fn apply_internal(
         }
     } else {
         write(
+            theme,
             scheme,
             template_name,
             template,
@@ -374,16 +408,18 @@ fn apply_internal(
 }
 
 pub(crate) fn all_with(
+    theme: &Theme,
     scheme: &Scheme,
     templates: &Loader,
     config: &Config,
     session: &mut Session,
 ) -> Result<()> {
-    all_with_internal(scheme, templates, config, session)
+    all_with_internal(theme, scheme, templates, config, session)
         .map_err(Error::rendering)
 }
 
 fn all_with_internal(
+    theme: &Theme,
     scheme: &Scheme,
     templates: &Loader,
     config: &Config,
@@ -397,6 +433,7 @@ fn all_with_internal(
         }
 
         apply(
+            theme,
             scheme,
             template_name,
             &template,
@@ -411,18 +448,18 @@ fn all_with_internal(
 
 pub(crate) fn all(
     templates: &Loader,
-    schemes: &IndexMap<String, Scheme>,
+    themes: &IndexMap<ThemeName, Theme>,
     config: &Config,
     write_mode: WriteMode,
     dry_run: bool,
 ) -> Result<()> {
-    all_internal(templates, schemes, config, write_mode, dry_run)
+    all_internal(templates, themes, config, write_mode, dry_run)
         .map_err(Error::rendering)
 }
 
 fn all_internal(
     templates: &Loader,
-    schemes: &IndexMap<String, Scheme>,
+    themes: &IndexMap<ThemeName, Theme>,
     config: &Config,
     write_mode: WriteMode,
     dry_run: bool,
@@ -430,8 +467,10 @@ fn all_internal(
     let mut session =
         Session::new(templates.providers.clone(), write_mode, dry_run)?;
 
-    for scheme_ref in schemes.values() {
-        all_with(scheme_ref, templates, config, &mut session)?;
+    for theme in themes.values() {
+        for scheme in theme.schemes.values() {
+            all_with(theme, scheme, templates, config, &mut session)?;
+        }
     }
 
     session.save()?;

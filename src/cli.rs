@@ -7,8 +7,8 @@ use log::{LevelFilter as LogLevelFilter, info};
 
 use crate::output::WriteMode;
 use crate::templates::Loader;
-use crate::themes::schemes;
-use crate::{Result, config, render};
+use crate::{Result, config, render, themes};
+
 
 // TODO: better documentation
 // TODO: add `prune` flag
@@ -54,20 +54,6 @@ impl Args {
     }
 }
 
-fn init_logger(verbosity: u8, quiet: bool) {
-    let level = if quiet {
-        LogLevelFilter::Error
-    } else {
-        match verbosity {
-            0 => LogLevelFilter::Warn,
-            1 => LogLevelFilter::Info,
-            2 => LogLevelFilter::Debug,
-            _ => LogLevelFilter::Trace,
-        }
-    };
-
-    LoggerBuilder::new().filter_level(level).init();
-}
 
 pub fn run() -> Result<()> {
     let cli = Args::parse();
@@ -75,9 +61,8 @@ pub fn run() -> Result<()> {
     init_logger(cli.verbose, cli.quiet);
 
     let config = config::load()?;
-
     let templates = Loader::init(&config)?;
-    let schemes = schemes::load_all(&config.dirs.schemes)?;
+    let themes = themes::load_all(&config)?;
 
     if cli.clean {
         let render_dir = Path::new(&config.dirs.render);
@@ -91,7 +76,23 @@ pub fn run() -> Result<()> {
         }
     }
 
-    render::all(&templates, &schemes, &config, cli.write_mode(), cli.dry_run)?;
+    render::all(&templates, &themes, &config, cli.write_mode(), cli.dry_run)?;
 
     Ok(())
+}
+
+
+fn init_logger(verbosity: u8, quiet: bool) {
+    let level = if quiet {
+        LogLevelFilter::Error
+    } else {
+        match verbosity {
+            0 => LogLevelFilter::Warn,
+            1 => LogLevelFilter::Info,
+            2 => LogLevelFilter::Debug,
+            _ => LogLevelFilter::Trace,
+        }
+    };
+
+    LoggerBuilder::new().filter_level(level).init();
 }

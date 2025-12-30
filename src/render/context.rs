@@ -7,10 +7,12 @@ use super::Color;
 use crate::Result;
 use crate::output::{Special, Style, TextStyle};
 use crate::themes::{
-    Meta, ResolvedExtra, ResolvedRole, RoleName, Scheme, Swatch,
+    Meta, ResolvedExtra, ResolvedRole, RoleName, Scheme, Swatch, Theme,
 };
 
+
 pub(crate) fn build(
+    theme: &Theme,
     scheme: &Scheme,
     special: &Special,
     style: &Arc<Style>,
@@ -23,7 +25,7 @@ pub(crate) fn build(
 
     let swatch_roles = map_swatches_to_roles(scheme);
 
-    insert_meta(&mut ctx, scheme, style);
+    insert_meta(&mut ctx, theme, scheme, style);
 
     insert_palette(&mut ctx, scheme, &swatch_roles, style);
 
@@ -57,25 +59,24 @@ pub(crate) fn build(
     Ok(ctx)
 }
 
-fn ascii_fallback(
-    unicode: Option<&String>,
-    ascii: Option<&String>,
-) -> Option<String> {
-    ascii
-        .cloned()
-        .or_else(|| unicode.map(|s| deunicode::deunicode(s)))
-}
-
 fn insert_meta(
     ctx: &mut BTreeMap<String, minijinja::Value>,
+    theme: &Theme,
     scheme: &Scheme,
     style: &Arc<Style>,
 ) {
     ctx.insert(
+        "theme".to_owned(),
+        minijinja::Value::from_serialize(&theme.name),
+    );
+    ctx.insert(
+        "theme_ascii".to_owned(),
+        minijinja::Value::from_serialize(&theme.name_ascii),
+    );
+    ctx.insert(
         "scheme".to_owned(),
         minijinja::Value::from_serialize(&scheme.name),
     );
-
     ctx.insert(
         "scheme_ascii".to_owned(),
         minijinja::Value::from_serialize(&scheme.name_ascii),
@@ -85,17 +86,14 @@ fn insert_meta(
         scheme.meta.author.as_ref(),
         scheme.meta.author_ascii.as_ref(),
     );
-
     let license_ascii = ascii_fallback(
         scheme.meta.license.as_ref(),
         scheme.meta.license_ascii.as_ref(),
     );
-
     let blurb_ascii = ascii_fallback(
         scheme.meta.blurb.as_ref(),
         scheme.meta.blurb_ascii.as_ref(),
     );
-
     let meta_ctx = if style.text == TextStyle::Ascii {
         Meta {
             author: author_ascii.clone(),
@@ -108,11 +106,19 @@ fn insert_meta(
     } else {
         scheme.meta.clone()
     };
-
     ctx.insert(
         "meta".to_owned(),
         minijinja::Value::from_serialize(&meta_ctx),
     );
+}
+
+fn ascii_fallback(
+    unicode: Option<&String>,
+    ascii: Option<&String>,
+) -> Option<String> {
+    ascii
+        .cloned()
+        .or_else(|| unicode.map(|s| deunicode::deunicode(s)))
 }
 
 fn map_swatches_to_roles(scheme: &Scheme) -> IndexMap<String, Vec<String>> {

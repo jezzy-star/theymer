@@ -34,7 +34,8 @@ pub(crate) use self::swatches::{
 const MULTI_SCHEME_BASE_FILENAME: &str = "base.toml";
 const SINGLE_SCHEME_ROOT_FILENAME: &str = "theme.toml";
 
-type Name = ValidatedName<"theme", Unicode>;
+
+pub(crate) type Name = ValidatedName<"theme", Unicode>;
 type AsciiName = ValidatedName<"theme", Ascii>;
 
 type Result<T> = StdResult<T, Error>;
@@ -105,6 +106,7 @@ pub(crate) fn load_all(
 }
 
 
+// TODO: rewrite this to be cleaner
 pub(crate) fn load(name: Name, config: &Config) -> crate::Result<Theme> {
     let themes_dir = config
         .project_root

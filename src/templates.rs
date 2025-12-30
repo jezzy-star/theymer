@@ -5,7 +5,8 @@ use anyhow::Context as _;
 use indexmap::IndexMap;
 use walkdir::WalkDir;
 
-use crate::{Config, Error, PathExt as _, Result};
+use crate::extensions::PathExt as _;
+use crate::{Config, Error, Result};
 
 pub(crate) mod directives;
 pub(crate) mod providers;

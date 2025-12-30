@@ -21,19 +21,25 @@
     reason = "seems to be broken for `pub(crate)` errors"
 )]
 
+
+use std::io;
+use std::result::Result as StdResult;
+
+
+pub mod cli;
+pub mod config;
+
+pub(crate) mod themes;
+
 mod extensions;
 mod manifest;
 mod output;
 mod render;
 mod templates;
 
-pub(crate) mod themes;
-
-pub mod cli;
-pub mod config;
-
-use std::io;
-use std::result::Result as StdResult;
+pub(crate) use self::config::{Config, ProjectType};
+pub(crate) use self::manifest::{Entry as ManifestEntry, Manifest};
+pub(crate) use self::themes::{Name as ThemeName, Scheme, SchemeName, Theme};
 
 use self::config::Error as ConfigError;
 use self::manifest::Error as ManifestError;
@@ -43,12 +49,9 @@ use self::themes::{
     Error as ThemeError, NameError, RoleError, SchemeError, SwatchError,
 };
 
-pub(crate) use self::config::{Config, ProjectType};
-pub(crate) use self::extensions::{Merge, PathExt};
-pub(crate) use self::manifest::{Entry as ManifestEntry, Manifest};
-pub(crate) use self::themes::Scheme;
 
 pub type Result<T> = StdResult<T, Error>;
+
 
 #[non_exhaustive]
 #[derive(Debug, thiserror::Error)]

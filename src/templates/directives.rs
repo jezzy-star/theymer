@@ -6,7 +6,7 @@ use indexmap::{IndexMap, IndexSet};
 use itertools::Itertools as _;
 
 use self::DirectiveType::{Other, Theymer};
-use crate::PathExt as _;
+use crate::extensions::PathExt as _;
 use crate::output::{ColorStyle, Style, TextStyle};
 
 type Result<T> = StdResult<T, Error>;
