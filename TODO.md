@@ -117,8 +117,9 @@
 - [ ] add `scroll` role (set to `strawberry` for cutiepro?)
 - [ ] allow direct hex colors as role values in schemes and make the palette
       table technically optional?
-- [ ] rethink role design around headings and rainbow punctuation
-  - [ ] make `rainbow` an optional array under a new `features` table
+- [x] rethink role design around headings and rainbow punctuation
+  - [x] make `rainbow` an optional array under a new ~~`features`~~ `extra`
+        table
 
 ## palettes
 
