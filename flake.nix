@@ -21,6 +21,7 @@
     eachSystem = lib.genAttrs lib.systems.flakeExposed;
     cargo = builtins.fromTOML (builtins.readFile ./Cargo.toml);
     workspace = cargo.workspace.package;
+    rustFlags = "-C link-arg=-fuse-ld=mold -Z macro-backtrace";
 
     pkgsFor = eachSystem (
       system:
@@ -54,7 +55,7 @@
             zlib
           ];
 
-          RUSTFLAGS = "-C link-arg=-fuse-ld=mold";
+          RUSTFLAGS = rustFlags;
 
           # disable sccache in nix builds
           CARGO_BUILD_RUSTC_WRAPPER = "";
@@ -94,6 +95,7 @@
           ];
 
           RUST_SRC_PATH = "${rustToolchain}/lib/rustlib/src/rust/library";
+          RUSTFLAGS = rustFlags;
           RUST_BACKTRACE = "1";
 
           shellHook = ''
