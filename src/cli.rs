@@ -1,5 +1,4 @@
 use std::fs;
-use std::path::Path;
 
 use clap::{ArgAction, Parser};
 use env_logger::Builder as LoggerBuilder;
@@ -65,13 +64,15 @@ pub fn run() -> Result<()> {
     let themes = themes::load_all(&config)?;
 
     if cli.clean {
-        let render_dir = Path::new(&config.dirs.render);
-        if render_dir.exists() {
+        let render = &config.project.render_all_into;
+        if let Some(dir) = render
+            && dir.exists()
+        {
             if cli.dry_run {
-                info!("would clean `{}`", render_dir.display());
+                info!("would clean `{}`", dir.display());
             } else {
-                fs::remove_dir_all(render_dir)?;
-                info!("cleaned `{}`", render_dir.display());
+                fs::remove_dir_all(dir)?;
+                info!("cleaned `{}`", dir.display());
             }
         }
     }

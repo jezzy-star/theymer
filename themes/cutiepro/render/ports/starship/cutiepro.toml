@@ -1,0 +1,825 @@
+#:tombi format.disabled = true
+
+palette = "cutiepro"
+add_newline = true
+follow_symlinks = true
+format = """
+(\
+([](strawberry)$os$username$hostname$localip$netns[](strawberry))\
+)\
+(\
+([](cherry_blossom)$directory[](cherry_blossom))\
+)\
+(\
+([](honeycomb)$vcsh[](honeycomb))\
+([](honeycomb)$git_branch$git_commit$git_status$git_metrics$git_state[](honeycomb))\
+([](honeycomb)$hg_branch[](honeycomb))\
+([](honeycomb)$fossil_branch$fossil_metrics[](honeycomb))\
+([](honeycomb)$pijul_channel[](honeycomb))\
+)\
+(\
+([](sour_apple)$bun[](sour_apple))\
+([](sour_apple)$deno[](sour_apple))\
+([](sour_apple)$nodejs[](sour_apple))\
+([](sour_apple)$purescript[](sour_apple))\
+([](sour_apple)$c[](sour_apple))\
+([](sour_apple)$cpp[](sour_apple))\
+([](sour_apple)$cmake[](sour_apple))\
+([](sour_apple)$cobol[](sour_apple))\
+([](sour_apple)$crystal[](sour_apple))\
+([](sour_apple)$daml[](sour_apple))\
+([](sour_apple)$dart[](sour_apple))\
+([](sour_apple)$dotnet[](sour_apple))\
+([](sour_apple)$elixir[](sour_apple))\
+([](sour_apple)$elm[](sour_apple))\
+([](sour_apple)$fennel[](sour_apple))\
+([](sour_apple)$gleam[](sour_apple))\
+([](sour_apple)$golang[](sour_apple))\
+([](sour_apple)$buf[](sour_apple))\
+([](sour_apple)$helm[](sour_apple))\
+([](sour_apple)$opa[](sour_apple))\
+([](sour_apple)$haskell[](sour_apple))\
+([](sour_apple)$haxe[](sour_apple))\
+([](sour_apple)$java[](sour_apple))\
+([](sour_apple)$kotlin[](sour_apple))\
+([](sour_apple)$scala[](sour_apple))\
+([](sour_apple)$gradle[](sour_apple))\
+([](sour_apple)$julia[](sour_apple))\
+([](sour_apple)$lua[](sour_apple))\
+([](sour_apple)$mojo[](sour_apple))\
+([](sour_apple)$nim[](sour_apple))\
+([](sour_apple)$ocaml[](sour_apple))\
+([](sour_apple)$odin[](sour_apple))\
+([](sour_apple)$perl[](sour_apple))\
+([](sour_apple)$php[](sour_apple))\
+([](sour_apple)$python[](sour_apple))\
+([](sour_apple)$quarto[](sour_apple))\
+([](sour_apple)$raku[](sour_apple))\
+([](sour_apple)$rlang[](sour_apple))\
+([](sour_apple)$red[](sour_apple))\
+([](sour_apple)$ruby[](sour_apple))\
+([](sour_apple)$vagrant[](sour_apple))\
+([](sour_apple)$rust[](sour_apple))\
+([](sour_apple)$solidity[](sour_apple))\
+([](sour_apple)$swift[](sour_apple))\
+([](sour_apple)$typst[](sour_apple))\
+([](sour_apple)$vlang[](sour_apple))\
+([](sour_apple)$zig[](sour_apple))\
+)\
+(\
+([](peacock)$package[](peacock))\
+)\
+(\
+([](sky)$singularity[](sky))\
+([](sky)$kubernetes[](sky))\
+([](sky)$docker_context[](sky))\
+([](sky)$container[](sky))\
+([](sky)$guix_shell[](sky))\
+([](sky)$nix_shell[](sky))\
+([](sky)$aws[](sky))\
+([](sky)$azure[](sky))\
+([](sky)$gcloud[](sky))\
+([](sky)$openstack[](sky))\
+([](sky)$nats[](sky))\
+([](sky)$pulumi[](sky))\
+([](sky)$terraform[](sky))\
+([](sky)$conda[](sky))\
+([](sky)$pixi[](sky))\
+([](sky)$meson[](sky))\
+([](sky)$spack[](sky))\
+([](sky)$direnv[](sky))\
+([](sky)$mise[](sky))\
+)\
+$fill\
+(\
+([](salmon)$status[](salmon) )\
+([](princess)$battery[](princess) )\
+([](creamsicle)$memory_usage[](creamsicle) )\
+([](princess)$sudo[](princess) )\
+([](creamsicle)$shell[](creamsicle) )\
+([](creamsicle)$jobs[](creamsicle) )\
+([](blueberry)$cmd_duration[](blueberry) )\
+([](lilac)$time[](lilac))\
+)\
+$line_break\
+$shlvl$character
+"""
+
+[os]
+disabled = false
+style = "bg:strawberry fg:raven"
+format = "[$symbol]($style)"
+
+[os.symbols]
+Alpaquita = " "
+Alpine = " "
+AlmaLinux = " "
+Amazon = " "
+Android = " "
+Arch = " "
+Artix = " "
+CachyOS = " "
+CentOS = " "
+Debian = " "
+DragonFly = " "
+Emscripten = " "
+EndeavourOS = " "
+Fedora = " "
+FreeBSD = " "
+Garuda = "󰛓 "
+Gentoo = " "
+HardenedBSD = "󰞌 "
+Illumos = "󰈸 "
+Kali = " "
+Linux = " "
+Mabox = " "
+Macos = " "
+Manjaro = " "
+Mariner = " "
+MidnightBSD = " "
+Mint = " "
+NetBSD = " "
+NixOS = " "
+Nobara = " "
+OpenBSD = "󰈺 "
+openSUSE = " "
+OracleLinux = "󰌷 "
+Pop = " "
+Raspbian = " "
+Redhat = " "
+RedHatEnterprise = " "
+RockyLinux = " "
+Redox = "󰀘 "
+Solus = "󰠳 "
+SUSE = " "
+Ubuntu = " "
+Unknown = " "
+Void = " "
+Windows = "󰍲 "
+
+[username]
+disabled = false
+style_user = "bg:strawberry fg:raven"
+style_root = "bg:strawberry fg:raven bold italic"
+format = "[]($style)[  $user ]($style)"
+# format = "[  $user ]($style)"
+# show_always = false
+show_always = true
+
+[hostname]
+disabled = false
+ssh_symbol = " "
+style = "bg:strawberry fg:raven"
+format = "[]($style)[ $ssh_symbol$hostname ]($style)"
+ssh_only = true
+# ssh_only = false
+trim_at = ""
+
+[localip]
+disabled = false
+style = "bg:strawberry fg:raven"
+format = '[\($localipv4\) ]($style)'
+ssh_only = true
+# ssh_only = false
+
+[netns]
+disabled = false
+symbol = " "
+style = "bg:strawberry fg:raven"
+format = '[]($style)[ $symbol \[$name\] ]($style)'
+
+[directory]
+disabled = false
+truncation_symbol = "…/"
+read_only = "󰌾"
+home_symbol = " "
+style = "bg:cherry_blossom fg:raven bold"
+read_only_style = "bg:cherry_blossom fg:raven bold"
+before_repo_root_style = "bg:cherry_blossom fg:soil"
+repo_root_style = "bg:cherry_blossom fg:raven bold"
+format = "[ $path( $read_only) ]($style)"
+repo_root_format = "[  $repo_root]($repo_root_style)[$path ]($style)([$read_only]($read_only_style))"
+use_os_path_sep = false
+truncation_length = 5
+# path_sep = "  "
+
+[directory.substitutions]
+# '/' = '  '
+
+[vcsh]
+disabled = false
+symbol = "󰳐 "
+style = "bg:honeycomb fg:raven"
+format = "[ $symbol$repo ]($style)"
+
+[git_branch]
+disabled = false
+symbol = ""
+truncation_symbol = "…"
+style = "bg:honeycomb fg:raven"
+format = "[ $symbol$branch(:$remote_branch) ]($style)"
+always_show_remote = false
+only_attached = false
+# truncation_length = 20
+
+[git_commit]
+disabled = false
+tag_symbol = " "
+style = "bg:honeycomb fg:raven"
+format = '[\($hash( $tag)\) ]($style)'
+tag_disabled = false
+only_detached = true
+# only_detached = false
+commit_hash_length = 7
+tag_max_candidates = 0 # exact matches only
+
+[git_status]
+disabled = false
+style = "bg:honeycomb fg:raven"
+format = "[($ahead_behind )(┊ $conflicted$deleted$renamed$modified$typechanged$stashed$staged$untracked)]($style)"
+up_to_date = "🗸"
+ahead = "↑${count}"
+behind = "↓${count}"
+diverged = "↑${ahead_count} ↓${behind_count}"
+conflicted = "≠${count} "
+untracked = "?${count} "
+stashed = "\\$${count} "
+modified = "!${count} "
+staged = "+${count} "
+renamed = "»${count} "
+deleted = "−${count} "
+typechanged = "⇄ "
+ignore_submodules = false
+use_git_executable = false
+# windows_starship = '/mnt/c/...'
+
+[git_metrics]
+disabled = true
+# disabled = false
+added_style = "bg:honeycomb fg:raven"
+deleted_style = "bg:honeycomb fg:raven"
+format = '([\((+$added)( −$deleted)\) ]($added_style))'
+only_nonzero_diffs = true
+ignore_submodules = false
+
+[git_state]
+disabled = false
+style = "bg:honeycomb fg:raven"
+format = "[$state( $progress_current/$progress_total) ]($style)"
+rebase = "󰑐 "
+merge = "󰽜 "
+revert = "󰌥 "
+cherry_pick = " "
+bisect = " "
+am = "󰶈 "
+am_or_rebase = "󰶈 󰜥 󰑐 "
+
+[hg_branch]
+disabled = false
+symbol = " "
+style = "bg:honeycomb fg:raven"
+format = "[ $symbol$branch(:$topic) ]($style)"
+truncation_symbol = "…"
+# truncation_length = 20
+
+[fossil_branch]
+disabled = false
+symbol = ""
+style = "bg:honeycomb fg:raven"
+format = "[ $symbol$branch ]($style)"
+truncation_symbol = "…"
+# truncation_length = 20
+
+[fossil_metrics]
+disabled = false
+added_style = "bg:honeycomb fg:raven"
+deleted_style = "bg:honeycomb fg:raven"
+format = '[\((+$added)( −$deleted)\) ]($added_style)'
+only_nonzero_diffs = true
+
+[pijul_channel]
+disabled = false
+symbol = ""
+style = "bg:honeycomb fg:raven"
+format = "[ $symbol$channel ]($style)"
+truncation_symbol = "…"
+# truncation_length = 20
+
+[bun]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[deno]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[nodejs]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[purescript]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[c]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version(-$name)) ]($style)"
+
+[cpp]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version(-$name)) ]($style)"
+
+[cmake]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[cobol]
+disabled = false
+symbol = "⚙ "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[crystal]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[daml]
+disabled = false
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[dart]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[dotnet]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version)(󰣉 $ftm) ]($style)"
+
+[elixir]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = '[ $symbol($version (\(OTP $otp_version\))) ]($style)'
+
+[elm]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[fennel]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[gleam]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[golang]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[buf]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[helm]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[opa]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[haskell]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[haxe]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[java]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[kotlin]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[scala]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[gradle]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[julia]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[lua]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[mojo]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[nim]
+disabled = false
+symbol = "󰆥 "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[ocaml]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = '[ $symbol($version) (\($switch_indicator$switch_name\) )]($style)'
+
+[odin]
+disabled = false
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[perl]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[php]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[python]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = '[ $symbol($pyenv_prefix) ($version )(\($virtualenv\) )]($style)'
+pyenv_version_name = false
+# pyenv_version_name = true
+
+[quarto]
+disabled = false
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[raku]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version(-$vm_version)) ]($style)"
+
+[rlang]
+disabled = false
+symbol = "󰟔 "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[red]
+disabled = false
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[ruby]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[vagrant]
+disabled = false
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[rust]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[solidity]
+disabled = false
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[swift]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[typst]
+disabled = false
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[vlang]
+disabled = false
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[zig]
+disabled = false
+symbol = " "
+style = "bg:sour_apple fg:raven"
+format = "[ $symbol($version) ]($style)"
+
+[package]
+disabled = false
+symbol = " "
+style = "bg:peacock fg:raven"
+format = "[ $symbol($version) ]($style)"
+display_private = true
+
+[singularity]
+disabled = false
+symbol = " "
+style = "bg:sky fg:raven"
+format = '[ $symbol\[$env\] ]($style)'
+
+[kubernetes]
+disabled = false
+symbol = " "
+style = "bg:sky fg:raven"
+format = '[ $symbol$context(\($namespace\)) ]($style)'
+
+[docker_context]
+disabled = false
+symbol = " "
+style = "bg:sky fg:raven"
+format = "[ $symbol$context ]($style)"
+only_with_files = true
+
+[container]
+disabled = false
+symbol = " "
+style = "bg:sky fg:raven"
+format = '[ $symbol \[$name\] ]($style)'
+
+[guix_shell]
+disabled = false
+symbol = " "
+style = "bg:sky fg:raven"
+format = "[ $symbol]($style)"
+
+[nix_shell]
+disabled = false
+symbol = " "
+style = "bg:sky fg:raven"
+format = "[ $symbol$state ]($style)"
+# heuristic = true
+heuristic = false
+
+[aws]
+disabled = false
+symbol = " "
+style = "bg:sky fg:raven"
+format = '[ $symbol($profile)( \($region\))( \[$duration\]) ]($style)'
+
+[azure]
+disabled = false
+symbol = " "
+style = "bg:sky fg:raven"
+format = "[ $symbol($subscription) ]($style)"
+
+[gcloud]
+disabled = false
+symbol = "󱇶 "
+style = "bg:sky fg:raven"
+format = '[ $symbol$account(@$domain)( \($region\)) ]($style)'
+
+[openstack]
+disabled = false
+symbol = " "
+style = "bg:sky fg:raven"
+format = '[ $symbol$cloud( \($project\)) ]($style)'
+
+[nats]
+disabled = false
+symbol = " "
+style = "bg:sky fg:raven"
+format = "[ $symbol$name ]($style)"
+
+[pulumi]
+disabled = false
+symbol = " "
+style = "bg:sky fg:raven"
+format = "[ $symbol($username@)$stack ]($style)"
+
+[terraform]
+disabled = false
+symbol = " "
+style = "bg:sky fg:raven"
+format = "[ $symbol$workspace ]($style)"
+
+[conda]
+disabled = false
+symbol = " "
+style = "bg:sky fg:raven"
+format = "[ $symbol$environment ]($style)"
+
+[pixi]
+disabled = false
+symbol = "󰏗 "
+style = "bg:sky fg:raven"
+format = '[ $symbol($version)( \($environment\)) ]($style)'
+
+[meson]
+disabled = false
+symbol = "󰔷 "
+style = "bg:sky fg:raven"
+format = "[ $symbol$project ]($style)"
+
+[spack]
+disabled = false
+symbol = " "
+style = "bg:sky fg:raven"
+format = "[ $symbol$environment ]($style)"
+
+[direnv]
+disabled = false
+style = "bg:sky fg:raven"
+format = "[ $symbol$loaded/$allowed ]($style)"
+
+[mise]
+disabled = false
+style = "bg:sky fg:raven"
+format = "[ $symbol$health ]($style)"
+
+[fill]
+symbol = " "
+
+[status]
+disabled = false
+symbol = " "
+# success_symbol = " "
+not_executable_symbol = " "
+not_found_symbol = " "
+sigint_symbol = ""
+signal_symbol = ""
+style = "bg:salmon fg:raven bold"
+format = "[$symbol$status]($style)"
+map_symbol = true
+
+[battery]
+disabled = true
+format = "[$symbol$percentage]($style)"
+
+[[battery.display]]
+threshold = 20
+# threshold = 100
+style = "bg:princess fg:raven bold"
+
+# [[battery.display]]
+# threshold = 100
+# style = "bg:creamsicle fg:raven"
+
+[memory_usage]
+disabled = true
+# disabled = false
+symbol = "󰍛 "
+style = "bg:creamsicle fg:raven"
+format = "[$symbol$ram( | $swap)]($style)"
+threshold = 80
+# threshold = -1
+
+[sudo]
+disabled = false
+symbol = " "
+style = "bg:princess fg:raven"
+format = "[$symbol]($style)"
+
+[shell]
+disabled = true
+# disabled = false
+style = "bg:creamsicle fg:raven"
+format = "[$indicator ]($style)"
+
+[jobs]
+disabled = false
+symbol = "󰫢 "
+style = "bg:creamsicle fg:raven"
+format = "[$symbol$number]($style)"
+
+[cmd_duration]
+disabled = false
+style = "bg:blueberry fg:raven"
+format = "[ $duration]($style)"
+show_milliseconds = true
+# min_time = 2_000
+# min_time = 0
+min_time = 1
+show_notifications = false
+# min_time_to_notify = 45_000
+# notification_timeout = 5_000
+
+[time]
+disabled = false
+style = "bg:lilac fg:raven"
+format = "[ $time]($style)"
+
+[shlvl]
+disabled = false
+symbol = "❥"
+style = "chalk bold"
+format = "[$symbol]($style)"
+repeat = true
+repeat_offset = 1
+threshold = 0
+
+[character]
+disabled = false
+success_symbol = "[❥](cherry_blossom bold)"
+error_symbol = "[❥](cherry_blossom bold)"
+vimcmd_symbol = "[❥](cherry_blossom bold)"
+vimcmd_replace_one_symbol = "[❥](lilac bold)"
+vimcmd_replace_symbol = "[❥](lilac bold)"
+vimcmd_visual_symbol = "[❥](sky bold)"
+
+[palettes.cutiepro]
+blackboard = "#181716"
+strawberry = "#f56e7f"
+sour_apple = "#bec975"
+honeycomb = "#e8d6a7"
+lilac = "#caa2ca"
+cherry_blossom = "#e5a1a3"
+sky = "#a5b6ce"
+elephant = "#88847f"
+soil = "#73665b"
+salmon = "#f58669"
+goddess = "#a2caa0"
+creamsicle = "#f7bb6c"
+blueberry = "#9293ec"
+princess = "#ef7dc0"
+peacock = "#5dccc3"
+chalk = "#d5d0c9"
+cocoa = "#1f1e1b"
+raven = "#0a0909"
+metal = "#212225"
+date = "#210f11"
+film = "#2e2a27"
+charcoal = "#313735"
+asphalt = "#43403d"
+sea = "#0f3f4e"
+opium = "#978182"
+sage = "#878972"
+cloud = "#808387"
+nectarine = "#f1d090"
+lemon = "#ffef43"

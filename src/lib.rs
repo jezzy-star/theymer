@@ -37,7 +37,8 @@ mod output;
 mod render;
 mod templates;
 
-pub(crate) use self::config::{Config, ProjectType};
+pub use self::config::{Config, ProjectType};
+
 pub(crate) use self::manifest::{Entry as ManifestEntry, Manifest};
 pub(crate) use self::themes::{Name as ThemeName, Scheme, SchemeName, Theme};
 
@@ -51,7 +52,6 @@ use self::themes::{
 
 
 pub type Result<T> = StdResult<T, Error>;
-
 
 #[non_exhaustive]
 #[derive(Debug, thiserror::Error)]

@@ -1,4 +1,4 @@
-use crate::ThemeName;
+use crate::{ProjectType, ThemeName};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -65,8 +65,8 @@ fn uses_swatch_iteration(template_name: &str) -> bool {
 }
 
 fn resolve_path(
+    theme: &Theme,
     template_name: &str,
-    theme_name: &str,
     scheme_name: &str,
     config: &Config,
     swatch_name: Option<&str>,
@@ -74,7 +74,6 @@ fn resolve_path(
     let relative_path = template_name
         .strip_suffix(JINJA_TEMPLATE_SUFFIX)
         .unwrap_or(template_name);
-
     let filename = Path::new(relative_path)
         .file_name()
         .ok_or_else(|| Error::InternalBug {
@@ -84,30 +83,39 @@ fn resolve_path(
             ),
         })?
         .to_string_lossy();
-
     let parent_dirs = Path::new(relative_path)
         .parent()
         .unwrap_or_else(|| Path::new(""));
-
     let render = swatch_name.map_or_else(
         || {
             filename
-                .replace(THEME_MARKER, theme_name)
+                .replace(THEME_MARKER, theme.name.as_str())
                 .replace(SCHEME_MARKER, scheme_name)
         },
         |swatch| {
             filename
-                .replace(THEME_MARKER, theme_name)
+                .replace(THEME_MARKER, theme.name.as_str())
                 .replace(SCHEME_MARKER, scheme_name)
                 .replace(SWATCH_MARKER, swatch)
         },
     );
 
-    Ok(Path::new(&config.dirs.render)
-        .join(theme_name)
-        .join(scheme_name)
-        .join(parent_dirs)
-        .join(render))
+    let base_dir = theme.config.as_ref().map_or_else(
+        || match config.project.r#type {
+            ProjectType::Polytheme => {
+                theme.config.clone().expect("FIXME").dirs.render
+            }
+            ProjectType::Monotheme => config
+                .project
+                .render_all_into
+                .as_ref()
+                .expect("FIXME")
+                .clone(),
+        },
+        |theme_config| theme_config.dirs.render.clone(),
+    );
+
+    Ok(base_dir.join(parent_dirs).join(render))
 }
 
 fn strip_prefix(path: &Path, prefix: &Path, context: &str) -> Option<PathBuf> {
@@ -313,11 +321,10 @@ fn write(
     session: &mut Session,
     current_swatch: Option<&str>,
 ) -> anyhow::Result<()> {
-    let theme_name = theme.name.as_str();
     let scheme_name = scheme.name.as_str();
     let path = resolve_path(
+        theme,
         template_name,
-        theme_name,
         scheme_name,
         config,
         current_swatch,

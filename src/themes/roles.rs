@@ -313,7 +313,7 @@ impl Roles {
     }
 
     pub(crate) fn extend(&mut self, other: IndexMap<Name, Value>) {
-        self.0.extend(other)
+        self.0.extend(other);
     }
 }
 

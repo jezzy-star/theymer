@@ -1,0 +1,207 @@
+#:tombi format.disabled = true
+#:tombi lint.disabled = true
+
+"attribute" = "creamsicle"
+"type" = "creamsicle"
+# "type.enum"
+"type.enum.variant" = "sky"
+"constructor" = "goddess"
+"constant" = "sky"
+"constant.character.escape" = "berry"
+# "constant.numeric.integer"
+# "constant.numeric.float"
+"string" = "sour_apple"
+"string.regexp" = "berry"
+"string.special" = "berry"
+"string.special.path" = "peacock"
+"string.special.url" = { fg = "peacock", underline = { color = "peacock", style = "line" } }
+# "string.special.symbol"
+"comment" = "elephant"
+# "comment.line"
+"comment.line.documentation" = "ash"
+# "comment.block"
+"comment.block.documentation" = "ash"
+"comment.unused" = { modifiers = ["dim"] }
+"variable" = "cherry_blossom"
+"variable.builtin" = "princess"
+"variable.parameter" = "peach"
+"variable.other" = "cherry_blossom"
+# "variable.other.member"
+# "variable.other.member.private"
+"label" = "goddess"
+"punctuation" = "olive"
+# "punctuation.delimiter"
+# "punctuation.bracket"
+"punctuation.special" = "strawberry"
+"keyword" = "strawberry"
+# "keyword.control"
+"keyword.control.return" = "coral"
+"keyword.control.exception" = "coral"
+# "keyword.storage.type"
+# "keyword.storage.modifier"
+"operator" = "honeycomb"
+"function" = "lilac"
+# "function.method.private"
+"tag" = "sand"
+"namespace" = "sand"
+"special" = "princess"
+# "markup"
+# "markup.normal"
+# "markup.normal.completion"
+# "markup.normal.hover"
+# "markup.heading"
+# "markup.heading.marker"
+"markup.heading.1" = { fg = "cherry_blossom", modifiers = ["bold"] }
+"markup.heading.2" = { fg = "strawberry", modifiers = ["bold"] }
+"markup.heading.3" = { fg = "sand", modifiers = ["bold"] }
+"markup.heading.4" = { fg = "creamsicle", modifiers = ["bold"] }
+"markup.heading.5" = { fg = "sour_apple", modifiers = ["bold"] }
+"markup.heading.6" = { fg = "goddess", modifiers = ["bold"] }
+# "markup.heading.completion"
+# "markup.heading.hover"
+"markup.list" = "honeycomb"
+"markup.list.unnumbered" = "honeycomb"
+"markup.list.checked" = "sour_apple"
+"markup.list.unchecked" = "elephant"
+"markup.bold" = { fg = "lilac", modifiers = ["bold"] }
+"markup.italic" = { fg = "sky", modifiers = ["italic"] }
+"markup.strikethrough" = { fg = "ash", modifiers = ["crossed_out"] }
+"markup.link" = { fg = "peacock", underline = { color = "peacock", style = "line" } }
+"markup.link.url" = { fg = "peacock", underline = { color = "peacock", style = "line" } }
+"markup.link.label" = "goddess"
+"markup.link.text" = "goddess"
+"markup.quote" = "peach"
+"markup.raw" = "sour_apple"
+# "markup.raw.inline"
+# "markup.raw.inline.completion"
+# "markup.raw.inline.hover"
+# "markup.raw.block"
+# "diff"
+"diff.plus" = "sour_apple"
+# "diff.plus.gutter"
+"diff.minus" = "strawberry"
+# "diff.minus.gutter"
+"diff.delta" = "sky"
+"diff.delta.moved" = "peacock"
+"diff.delta.conflict" = "sand"
+# "diff.delta.gutter"
+"ui.background" = { bg = "blackboard" }
+"ui.background.separator" = "cherry_blossom"
+"cursor" = { bg = "opium", fg = "raven", modifiers = ["bold"] }
+"ui.cursor.normal" = { bg = "opium", fg = "raven", modifiers = ["bold"] }
+"ui.cursor.insert" = { bg = "sage", fg = "raven", modifiers = ["bold"] }
+"ui.cursor.select" = { bg = "cloud", fg = "raven", modifiers = ["bold"] }
+"ui.cursor.match" = { fg = "lemon", modifiers = [
+  "bold",
+], underline = { color = "lemon", style = "line" } }
+"ui.cursor.primary" = { bg = "cherry_blossom", fg = "raven", modifiers = [
+  "bold",
+] }
+"ui.cursor.primary.normal" = { bg = "cherry_blossom", fg = "raven", modifiers = [
+  "bold",
+] }
+"ui.cursor.primary.insert" = { bg = "sour_apple", fg = "raven", modifiers = [
+  "bold",
+] }
+"ui.cursor.primary.select" = { bg = "sky", fg = "raven", modifiers = ["bold"] }
+"ui.debug.breakpoint" = "coral"
+"ui.debug.active" = "princess"
+# "ui.gutter"
+# "ui.gutter.selected"
+"ui.linenr" = "soil"
+"ui.linenr.selected" = { fg = "peach", modifiers = ["bold"] }
+"ui.statusline" = { bg = "film", fg = "chalk" }
+"ui.statusline.inactive" = "elephant"
+"ui.statusline.normal" = { bg = "cherry_blossom", fg = "raven" }
+"ui.statusline.insert" = { bg = "sour_apple", fg = "raven" }
+"ui.statusline.select" = { bg = "sky", fg = "raven" }
+"ui.statusline.separator" = { fg = "creamsicle", modifiers = ["bold"] }
+"ui.bufferline" = { fg = "elephant" }
+"ui.bufferline.active" = { fg = "cherry_blossom", modifiers = [
+  "bold",
+], underline = { color = "cherry_blossom", style = "double_line" } }
+"ui.bufferline.background" = { bg = "raven" }
+"ui.popup" = { bg = "cocoa", fg = "nectar" }
+# "popup.info"
+# "ui.picker.header"
+# "ui.picker.header.column"
+"ui.picker.header.column.active" = { modifiers = [
+  "bold",
+], underline = { color = "cherry_blossom", style = "line" } }
+"ui.window" = "cherry_blossom"
+"ui.help" = { bg = "cocoa", fg = "nectar" }
+"ui.text" = "chalk"
+"ui.text.focus" = { bg = "ink" }
+"ui.text.inactive" = { fg = "elephant" }
+# "ui.text.info"
+"ui.text.directory" = "creamsicle"
+"ui.virtual.ruler" = { bg = "charcoal" }
+"ui.virtual.whitespace" = "soil"
+"ui.virtual.indent-guide" = "charcoal"
+"ui.virtual.inlay-hint".fg = "soil"
+"ui.virtual.inlay-hint".modifiers = ["italic"]
+# "ui.virtual.inlay-hint.parameter"
+# "ui.virtual.inlay-hint.type"
+"ui.virtual.wrap" = "soil"
+"ui.virtual.jump-label" = { fg = "lemon", modifiers = ["bold", "italic"] }
+"ui.menu" = { bg = "film" }
+"ui.menu.selected" = { fg = "cherry_blossom", modifiers = [
+  "bold",
+], underline = { color = "cherry_blossom", style = "line" } }
+"ui.menu.scroll" = { bg = "film", fg = "cherry_blossom" }
+"ui.selection" = { bg = "asphalt" }
+"ui.selection.primary" = { bg = "sea" }
+"ui.highlight" = { bg = "sea" }
+"ui.highlight.frameline" = { bg = "date" }
+"ui.cursorline.primary" = { bg = "ink" }
+# "cursorline.secondary"
+"ui.cursorcolumn.primary" = { bg = "ink" }
+# "cursorcolumn.secondary"
+"warning" = { fg = "nectar", modifiers = ["italic"] }
+"error" = { fg = "coral", modifiers = ["italic"] }
+"info" = { fg = "lilac", modifiers = ["italic"] }
+"hint" = { fg = "chalk", modifiers = ["italic"] }
+"diagnostic" = { underline = { color = "chalk", style = "dotted" } }
+"diagnostic.hint" = { underline = { color = "chalk", style = "dotted" } }
+"diagnostic.info" = { underline = { color = "lilac", style = "curl" } }
+"diagnostic.warning" = { underline = { color = "nectar", style = "curl" } }
+"diagnostic.error" = { underline = { color = "coral", style = "curl" } }
+"diagnostic.unnecessary" = { modifiers = ["dim"] }
+"diagnostic.deprecated" = { modifiers = ["crossed_out"] }
+"tabstop".modifiers = ["italic"]
+"rainbow" = ["goddess", "sky", "lilac", "cherry_blossom", "sand", "creamsicle"]
+
+[palette]
+cherry_blossom = "#eaa5a7"
+strawberry = "#f76f80"
+princess = "#fa7fb5"
+lilac = "#caa2ca"
+berry = "#9e9fec"
+sky = "#a5b6ce"
+peacock = "#8accc7"
+goddess = "#a2caa0"
+sour_apple = "#bec975"
+lemon = "#ffef43"
+honeycomb = "#eff0ae"
+nectar = "#f1d498"
+creamsicle = "#efcc7c"
+peach = "#e2bea1"
+sand = "#f9a057"
+coral = "#fa685d"
+raven = "#0a0909"
+ink = "#111010"
+date = "#210f11"
+blackboard = "#181716"
+cocoa = "#1f1e1b"
+film = "#2e2a27"
+charcoal = "#313735"
+sea = "#0f3f4e"
+asphalt = "#433a31"
+soil = "#584e46"
+cloud = "#808387"
+elephant = "#88847f"
+opium = "#978182"
+sage = "#878972"
+olive = "#b1a585"
+ash = "#b8b4ae"
+chalk = "#d5d0c9"

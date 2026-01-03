@@ -1,9 +1,7 @@
 use std::path::Path;
 
-use indexmap::{IndexMap, IndexSet};
-
 use crate::config::Provider;
-use crate::themes::{Extra, Meta, Palette, RawScheme, Roles, Swatch};
+use crate::themes::{Extra, Meta, Palette, RawScheme, Roles};
 
 
 pub(crate) trait Merge: Sized {
@@ -72,8 +70,7 @@ impl Merge for Roles {
 }
 
 impl_merge_for_all_fields!(RawScheme {
-    scheme,
-    scheme_ascii,
+    name_ascii,
     meta,
     palette,
     roles,

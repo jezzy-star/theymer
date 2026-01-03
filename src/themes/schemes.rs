@@ -53,14 +53,10 @@ pub(crate) enum Error {
 }
 
 #[non_exhaustive]
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub(crate) struct Scheme {
-    #[serde(rename(serialize = "scheme"))]
     pub name: Name,
-
-    #[serde(rename(serialize = "scheme_ascii"))]
     pub name_ascii: AsciiName,
-
     pub meta: Meta,
     pub palette: Palette,
 
@@ -76,8 +72,7 @@ pub(crate) struct Scheme {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct Raw {
-    pub scheme: Option<Name>,
-    pub scheme_ascii: Option<AsciiName>,
+    pub name_ascii: Option<AsciiName>,
     pub meta: Meta,
     pub palette: Palette,
     pub roles: Roles,
@@ -85,7 +80,7 @@ pub(crate) struct Raw {
 }
 
 impl Raw {
-    pub(crate) fn into_scheme(self, fallback_name: &str) -> Result<Scheme> {
+    pub(crate) fn into_scheme(self, filename: &str) -> Result<Scheme> {
         let resolved_roles = self.resolve_roles()?;
         let resolved_extra = self
             .extra
@@ -94,7 +89,7 @@ impl Raw {
                 Self::resolve_extra(extra, &self.palette, &resolved_roles)
             })
             .transpose()?;
-        let (scheme, scheme_ascii) = Self::names(&self, fallback_name)?;
+        let (scheme, scheme_ascii) = Self::names(&self, filename)?;
 
         Ok(Scheme {
             name: scheme,
@@ -242,13 +237,10 @@ impl Raw {
         }
     }
 
-    fn names(&self, fallback_name: &str) -> Result<(Name, AsciiName)> {
-        let name = match self.scheme.clone() {
-            Some(name) => name,
-            None => Name::parse(fallback_name)?,
-        };
+    fn names(&self, filename: &str) -> Result<(Name, AsciiName)> {
+        let name = Name::parse(filename)?;
 
-        let name_ascii = match self.scheme_ascii.clone() {
+        let name_ascii = match self.name_ascii.clone() {
             Some(ascii) => ascii,
             None => name.to_ascii()?,
         };
@@ -480,27 +472,7 @@ pub(crate) fn load_raw(path: &Path) -> Result<Raw> {
             src: Box::new(src),
         })?;
 
-    let scheme: Option<Name> = root
-        .get("scheme")
-        .map(|v| {
-            let s = v.as_str().ok_or_else(|| Error::Deserializing {
-                section: "scheme".to_owned(),
-                path: path_str.clone(),
-                src: Box::new(<toml::de::Error as serde::de::Error>::custom(
-                    "`scheme` must be a string",
-                )),
-            })?;
-            Name::parse(s).map_err(|e| Error::Deserializing {
-                section: "scheme".to_owned(),
-                path: path_str.clone(),
-                src: Box::new(<toml::de::Error as serde::de::Error>::custom(
-                    format!("{e}"),
-                )),
-            })
-        })
-        .transpose()?;
-
-    let scheme_ascii: Option<AsciiName> = root
+    let name_ascii: Option<AsciiName> = root
         .get("scheme_ascii")
         .map(|v| {
             let s = v.as_str().ok_or_else(|| Error::Deserializing {
@@ -567,8 +539,7 @@ pub(crate) fn load_raw(path: &Path) -> Result<Raw> {
     };
 
     let raw = Raw {
-        scheme,
-        scheme_ascii,
+        name_ascii,
         meta,
         palette,
         roles,

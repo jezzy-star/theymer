@@ -9,7 +9,9 @@ use serde::Deserialize;
 
 use crate::extensions::Merge as _;
 
-const FILENAME: &str = "theymer.toml";
+
+pub(crate) const FILENAME: &str = "theymer.toml";
+
 
 type Result<T> = StdResult<T, Error>;
 
@@ -39,25 +41,26 @@ pub(crate) enum Error {
     },
 }
 
+
 #[non_exhaustive]
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
     pub strip_directives: Vec<Vec<String>>,
-    pub dirs: Dirs,
+    pub project: ResolvedProject,
+    pub dirs: ResolvedDirs,
 
     #[serde(rename(serialize = "provider"))]
     pub providers: Vec<Provider>,
-
-    pub project_type: ProjectType,
-    pub project_root: PathBuf,
 }
+
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 #[serde(default)]
 struct Raw {
     pub strip_directives: Vec<Vec<String>>,
+    pub project: Option<Project>,
     pub dirs: Dirs,
 
     #[serde(rename(serialize = "provider"))]
@@ -70,10 +73,58 @@ impl Default for Raw {
             // TODO: figure out a design where defaults can be extended by the
             // user instead of completely overridden
             strip_directives: vec![vec!["#:tombi".to_owned()]],
+            project: None,
             dirs: Dirs::default(),
             providers: default_providers(),
         }
     }
+}
+
+
+#[non_exhaustive]
+#[derive(Debug, Deserialize)]
+pub struct ResolvedProject {
+    pub r#type: ProjectType,
+    pub render_all_into: Option<PathBuf>,
+    pub root: PathBuf,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Project {
+    pub polytheme: bool,
+
+    #[serde(default)]
+    pub render_all_into: Option<String>,
+}
+
+#[expect(
+    clippy::exhaustive_enums,
+    reason = "unlikely to add more project types"
+)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+pub enum ProjectType {
+    Monotheme,
+    Polytheme,
+}
+
+const fn detect_project_type(project_table: Option<&Project>) -> ProjectType {
+    if let Some(project) = project_table
+        && project.polytheme
+    {
+        return ProjectType::Polytheme;
+    }
+
+    ProjectType::Monotheme
+}
+
+
+#[non_exhaustive]
+#[derive(Debug, Deserialize)]
+pub struct ResolvedDirs {
+    pub themes: PathBuf,
+    pub schemes: PathBuf,
+    pub templates: PathBuf,
 }
 
 #[non_exhaustive]
@@ -84,7 +135,6 @@ pub struct Dirs {
     pub themes: String,
     pub schemes: String,
     pub templates: String,
-    pub render: String,
 }
 
 impl Default for Dirs {
@@ -93,10 +143,10 @@ impl Default for Dirs {
             themes: "themes".to_owned(),
             schemes: "schemes".to_owned(),
             templates: "templates".to_owned(),
-            render: "render".to_owned(),
         }
     }
 }
+
 
 #[non_exhaustive]
 #[derive(Debug, Clone, Deserialize)]
@@ -171,40 +221,23 @@ fn merge_providers_with_defaults(user_providers: &[Provider]) -> Vec<Provider> {
     providers.into_values().collect()
 }
 
-#[expect(
-    clippy::exhaustive_enums,
-    reason = "unlikely to add more project types"
-)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
-pub enum ProjectType {
-    Monotheme,
-    Polytheme,
-}
-
-fn detect_project_type(project_root: &Path, themes_dir: &str) -> ProjectType {
-    if project_root.join(themes_dir).exists() {
-        return ProjectType::Polytheme;
-    }
-
-    ProjectType::Monotheme
-}
 
 pub(crate) fn load() -> Result<Config> {
     let cwd = env::current_dir().map_err(|src| Error::Reading { src })?;
 
-    let project_root = find_project_root(&cwd)?;
+    let root = find_project_root(&cwd)?;
 
-    debug!("using project root `{}`", project_root.display());
+    debug!("using project root `{}`", root.display());
 
-    let config_path = project_root.join(FILENAME);
-    let content = fs::read_to_string(&config_path)
-        .map_err(|src| Error::Reading { src })?;
+    let path = root.join(FILENAME);
+    let content =
+        fs::read_to_string(&path).map_err(|src| Error::Reading { src })?;
 
     // FIXME: remove once all code is updated to use absolute paths based on
     // `config.project_root`
-    env::set_current_dir(&project_root).map_err(|src| Error::ChangingDir {
+    env::set_current_dir(&root).map_err(|src| Error::ChangingDir {
         cwd: cwd.display().to_string(),
-        root: project_root.display().to_string(),
+        root: root.display().to_string(),
         src,
     })?;
 
@@ -212,17 +245,55 @@ pub(crate) fn load() -> Result<Config> {
 
     Ok(Config {
         strip_directives: raw.strip_directives,
-        dirs: Dirs {
-            themes: expand_and_resolve(&raw.dirs.themes, &project_root)?,
-            schemes: expand_and_resolve(&raw.dirs.schemes, &project_root)?,
-            templates: expand_and_resolve(&raw.dirs.templates, &project_root)?,
-            render: expand_and_resolve(&raw.dirs.render, &project_root)?,
+        project: ResolvedProject {
+            r#type: detect_project_type(raw.project.as_ref()),
+            render_all_into: raw
+                .project
+                .as_ref()
+                .and_then(|p| p.render_all_into.as_ref())
+                .filter(|s| !s.is_empty())
+                .map(|s| expand_and_resolve(s, &root))
+                .transpose()?,
+            root: root.clone(),
+        },
+        dirs: ResolvedDirs {
+            themes: expand_and_resolve(&raw.dirs.themes, &root)?,
+            schemes: expand_and_resolve(&raw.dirs.schemes, &root)?,
+            templates: expand_and_resolve(&raw.dirs.templates, &root)?,
         },
         providers: merge_providers_with_defaults(&raw.providers),
-        project_type: detect_project_type(&project_root, &raw.dirs.themes),
-        project_root,
     })
 }
+
+
+pub(crate) fn parse<T>(content: &str) -> Result<T>
+where
+    T: serde::de::DeserializeOwned + Default,
+{
+    if content.trim().is_empty() {
+        return Ok(T::default());
+    }
+
+    toml::from_str(content).map_err(|src| Error::Parsing { src: Box::new(src) })
+}
+
+
+pub(crate) fn expand_and_resolve(path: &str, root: &Path) -> Result<PathBuf> {
+    let expanded =
+        shellexpand::full(path)
+            .map(Cow::into_owned)
+            .map_err(|src| Error::ExpandingPath {
+                path: path.to_owned(),
+                src,
+            })?;
+
+    if Path::new(&expanded).is_absolute() {
+        Ok(PathBuf::from(expanded))
+    } else {
+        Ok(root.join(expanded))
+    }
+}
+
 
 fn find_project_root(cwd: &Path) -> Result<PathBuf> {
     cwd.ancestors()
@@ -230,29 +301,5 @@ fn find_project_root(cwd: &Path) -> Result<PathBuf> {
         .map(PathBuf::from)
         .ok_or_else(|| Error::NoProjectRoot {
             cwd: cwd.display().to_string(),
-        })
-}
-
-fn parse(content: &str) -> Result<Raw> {
-    if content.trim().is_empty() {
-        return Ok(Raw::default());
-    }
-
-    toml::from_str(content).map_err(|src| Error::Parsing { src: Box::new(src) })
-}
-
-fn expand_and_resolve(path: &str, project_root: &Path) -> Result<String> {
-    shellexpand::full(path)
-        .map(Cow::into_owned)
-        .map_err(|src| Error::ExpandingPath {
-            path: path.to_owned(),
-            src,
-        })
-        .map(|expanded| {
-            if Path::new(&expanded).is_absolute() {
-                expanded
-            } else {
-                project_root.join(expanded).display().to_string()
-            }
         })
 }

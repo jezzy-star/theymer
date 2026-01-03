@@ -6,17 +6,19 @@ use walkdir::WalkDir;
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
+use crate::ProjectType;
 use crate::extensions::Merge as _;
 use crate::output::{Ascii, Unicode};
-use crate::{Config, ProjectType};
 
 
 pub(crate) mod schemes;
 
+mod config;
 mod names;
 mod roles;
 mod swatches;
 
+pub(crate) use self::config::Config;
 pub(crate) use self::names::{Error as NameError, Validated as ValidatedName};
 pub(crate) use self::roles::{
     Error as RoleError, Kind as RoleKind, Name as RoleName,
@@ -31,24 +33,21 @@ pub(crate) use self::swatches::{
 };
 
 
-const MULTI_SCHEME_BASE_FILENAME: &str = "base.toml";
-const SINGLE_SCHEME_ROOT_FILENAME: &str = "theme.toml";
+const BASE_FILENAME: &str = "theme.toml";
 
 
 pub(crate) type Name = ValidatedName<"theme", Unicode>;
 type AsciiName = ValidatedName<"theme", Ascii>;
-
-type Result<T> = StdResult<T, Error>;
 
 
 // TODO: add error for empty schemes dir in multi-scheme themes
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum Error {
     #[error(
-        "theme '{theme}' has neither a `{SINGLE_SCHEME_ROOT_FILENAME}` nor a \
-         schemes directory (`{schemes_dir}`)"
+        "theme '{theme}' has neither a `{BASE_FILENAME}` nor a schemes \
+         directory (`{schemes_dir}`)"
     )]
-    MissingRootSchemeAndSchemesDir { theme: String, schemes_dir: String },
+    MissingThemeBaseAndSchemesDir { theme: String, schemes_dir: String },
 
     #[error("failed to read directory `{0}` (invalid utf-8?)")]
     ReadingDir(String),
@@ -64,13 +63,7 @@ pub(crate) enum Error {
 }
 
 
-enum Type {
-    SingleScheme,
-    MultiScheme,
-}
-
-
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub(crate) struct Theme {
     #[serde(rename(serialize = "theme"))]
     pub name: Name,
@@ -80,6 +73,9 @@ pub(crate) struct Theme {
 
     #[serde(skip)]
     pub schemes: IndexMap<SchemeName, Scheme>,
+
+    #[serde(skip)]
+    pub config: Option<Config>,
 }
 
 
@@ -92,13 +88,23 @@ struct Base {
 }
 
 
+#[expect(
+    clippy::enum_variant_names,
+    reason = "false positive -- this naming pattern makes the most sense"
+)]
+enum Type {
+    SingleScheme,
+    MultiScheme,
+}
+
+
 pub(crate) fn load_all(
-    config: &Config,
+    config: &crate::Config,
 ) -> crate::Result<IndexMap<Name, Theme>> {
     discover_themes(config)?
         .into_iter()
         .map(|name| {
-            let theme = load(name, &config)?;
+            let theme = load(name, config)?;
 
             Ok((theme.name.clone(), theme))
         })
@@ -107,35 +113,31 @@ pub(crate) fn load_all(
 
 
 // TODO: rewrite this to be cleaner
-pub(crate) fn load(name: Name, config: &Config) -> crate::Result<Theme> {
+pub(crate) fn load(name: Name, config: &crate::Config) -> crate::Result<Theme> {
     let themes_dir = config
-        .project_root
+        .project
+        .root
         .join(&config.dirs.themes)
         .join(name.as_str());
-    let schemes_dir = config
-        .project_root
-        .join(&config.dirs.themes)
-        .join(name.as_str())
-        .join(&config.dirs.schemes);
+    let theme_config = config::load(&themes_dir, &name, config)?;
 
-    let single_scheme_root_path = themes_dir.join(SINGLE_SCHEME_ROOT_FILENAME);
-    let multi_scheme_base_path = themes_dir.join(MULTI_SCHEME_BASE_FILENAME);
+    let schemes_dir = theme_config.as_ref().map_or_else(
+        || config.dirs.schemes.clone(),
+        |tc| tc.dirs.schemes.clone(),
+    );
 
-    let theme_type = if single_scheme_root_path.exists() {
-        Type::SingleScheme
-    } else if multi_scheme_base_path.exists() || schemes_dir.exists() {
+    let base_path = themes_dir.join(BASE_FILENAME);
+
+    let theme_type = if schemes_dir.exists() && schemes_dir.is_dir() {
         Type::MultiScheme
+    } else if base_path.exists() {
+        Type::SingleScheme
     } else {
-        return Err(Error::MissingRootSchemeAndSchemesDir {
+        return Err(Error::MissingThemeBaseAndSchemesDir {
             theme: name.to_string(),
             schemes_dir: schemes_dir.display().to_string(),
         }
         .into());
-    };
-
-    let base_path = match theme_type {
-        Type::SingleScheme => single_scheme_root_path,
-        Type::MultiScheme => multi_scheme_base_path,
     };
 
     let base = if base_path.exists() {
@@ -162,7 +164,7 @@ pub(crate) fn load(name: Name, config: &Config) -> crate::Result<Theme> {
 
                 schemes
             } else {
-                return Err(Error::MissingRootSchemeAndSchemesDir {
+                return Err(Error::MissingThemeBaseAndSchemesDir {
                     theme: name.to_string(),
                     schemes_dir: schemes_dir.display().to_string(),
                 }
@@ -182,7 +184,7 @@ pub(crate) fn load(name: Name, config: &Config) -> crate::Result<Theme> {
 
                 schemes
             } else {
-                return Err(Error::MissingRootSchemeAndSchemesDir {
+                return Err(Error::MissingThemeBaseAndSchemesDir {
                     theme: name.to_string(),
                     schemes_dir: schemes_dir.display().to_string(),
                 }
@@ -195,19 +197,21 @@ pub(crate) fn load(name: Name, config: &Config) -> crate::Result<Theme> {
         name,
         name_ascii,
         schemes,
+        config: theme_config,
     })
 }
 
 
-fn discover_themes(config: &Config) -> crate::Result<Vec<Name>> {
-    match config.project_type {
+fn discover_themes(config: &crate::Config) -> crate::Result<Vec<Name>> {
+    match config.project.r#type {
         ProjectType::Monotheme => {
             let raw_name = config
-                .project_root
+                .project
+                .root
                 .file_name()
                 .and_then(|n| n.to_str())
                 .ok_or_else(|| {
-                    Error::ReadingDir(config.project_root.display().to_string())
+                    Error::ReadingDir(config.project.root.display().to_string())
                 })?;
             let name = Name::parse(raw_name)?;
 
@@ -215,7 +219,7 @@ fn discover_themes(config: &Config) -> crate::Result<Vec<Name>> {
         }
 
         ProjectType::Polytheme => {
-            let themes_dir = config.project_root.join(&config.dirs.themes);
+            let themes_dir = config.project.root.join(&config.dirs.themes);
 
             fs::read_dir(&themes_dir)?
                 .filter_map(StdResult::ok)
@@ -272,14 +276,27 @@ fn load_schemes(
 }
 
 
-fn load_base(path: &Path) -> Result<Base> {
+fn load_base(path: &Path) -> crate::Result<Base> {
     let content = fs::read_to_string(path).map_err(|src| Error::Reading {
         path: path.display().to_string(),
         src,
     })?;
 
-    toml::from_str(&content).map_err(|src| Error::Parsing {
-        path: path.display().to_string(),
-        src: Box::new(src),
+    let root: toml::Table =
+        toml::from_str(&content).map_err(|src| Error::Parsing {
+            path: path.display().to_string(),
+            src: Box::new(src),
+        })?;
+
+    let name_ascii = root
+        .get("name_ascii")
+        .and_then(|v| v.as_str())
+        .map(String::from);
+
+    let raw_scheme = schemes::load_raw(path)?;
+
+    Ok(Base {
+        name_ascii,
+        raw_scheme,
     })
 }

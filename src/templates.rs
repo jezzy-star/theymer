@@ -1,4 +1,5 @@
 use std::fs;
+use std::path::Path;
 use std::result::Result as StdResult;
 
 use anyhow::Context as _;
@@ -8,6 +9,7 @@ use walkdir::WalkDir;
 use crate::extensions::PathExt as _;
 use crate::{Config, Error, Result};
 
+
 pub(crate) mod directives;
 pub(crate) mod providers;
 
@@ -16,9 +18,11 @@ pub(crate) use self::providers::{
     Error as ProviderError, Resolved as ResolvedProvider,
 };
 
+
 pub(crate) const SET_TEST_OBJECT: &str = "_set";
 pub(crate) const JINJA_TEMPLATE_SUFFIX: &str = ".jinja";
 pub(crate) const SKIP_RENDERING_PREFIX: char = '_';
+
 
 #[derive(Debug)]
 pub(crate) struct Loader {
@@ -121,7 +125,7 @@ impl Loader {
 
     fn templates_with_directives(
         env: &mut minijinja::Environment<'static>,
-        dir: &str,
+        dir: &Path,
         strip_patterns: &[Vec<String>],
     ) -> Result<IndexMap<String, Directives>> {
         let mut directives_map = IndexMap::new();
